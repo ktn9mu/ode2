@@ -11,7 +11,7 @@
 
 using namespace std;
 
-// the differential equation to be solved
+// differential equation to be solved
 double fun1(double x, double y){
   (void)x;              // prevent unused variable warning
   return -2*y;          // f = y'(x,y) = -2 * y(x)  
