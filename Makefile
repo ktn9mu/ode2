@@ -14,3 +14,6 @@ RK: RK.cpp RK.hpp
 
 clean:
 	rm -f RKdemo *.dat RK.o *~
+
+clean_all: clean
+	rm -f *png
