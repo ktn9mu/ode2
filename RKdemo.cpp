@@ -9,77 +9,119 @@
 #include <iostream>
 #include <cstdio>
 
-using namespace std;
+// ---------------------------------------------------------
+// Example ODEs
+// ---------------------------------------------------------
 
-// differential equation to be solved
+// Example from original demo (unused here)
 double fun1(double x, double y){
-  (void)x;              // prevent unused variable warning
-  return -2*y;          // f = y'(x,y) = -2 * y(x)  
-}                       // solution: y(x) = 3 * exp(-2*x) ; with initial condition y(0)=3
-
-double fun2(double x, double y){
-  return -y/x-2/(x*x);  // f = y'(x,y) = -y(x)/x - 2/x^2 
-}                       // -2*log(|x|)/x+2/x  ; with initial condition y(0)=2
-
-int main(int argc, char **argv){
-  TApplication theApp("App", &argc, argv); // init ROOT App for displays
-
-  // solve our DEQ using RK1 or RK2 methods!
-  // Two examples are given.  Choose a function for testing
-  TGraph tg1=RK1Solve(fun1,3,30,0,3);                     // initial condition y(0)=3
-  TGraph tg2=RK2Solve(fun1,3,30,0,3);
-  TF1 fun_sol=TF1("fun_sol","3*exp(-2*x)",0,3);           // exact solution
-  //TGraph tg1=RK1Solve(fun2,2,100,1,100);                // initial condition y(1)=2
-  //TGraph tg2=RK2Solve(fun2,2,100,1,100);
-  //TF1 fun_sol=TF1("fun_sol","-2*log(x)/x+2/x",1,100);   // exact solution
-
-  // ******************************************************************************
-  // ** this block is useful for supporting both high and std resolution screens **
-  UInt_t dh = gClient->GetDisplayHeight()/2;   // fix plot to 1/2 screen height  
-  //UInt_t dw = gClient->GetDisplayWidth();
-  UInt_t dw = 1.1*dh;
-  // ******************************************************************************
-
-  TCanvas *c1 = new TCanvas("c1","DEQ solutions",dw,dh);
-
-  tg1.SetMarkerSize(0.015*dh/8);  // size scale: 1 = 8 pixels, so here we choose the size to be 1.5% of the window height
-  tg2.SetMarkerSize(0.015*dh/8);
-  tg1.SetMarkerStyle(kFullTriangleUp);
-  tg2.SetMarkerStyle(kFullTriangleDown);
-  tg1.SetMarkerColor(kRed);
-  tg2.SetMarkerColor(kGreen-2);
-  fun_sol.SetLineColor(kBlack);
-  fun_sol.SetLineStyle(2);
-  
-  // plot the results
-  tg1.SetTitle("ODE demo;x;y");
-  tg1.Draw("AP");
-  tg2.Draw("P");
-  fun_sol.Draw("same");
-  
-  TLegend *tl = new TLegend(0.6,0.7,0.9,0.9);
-  tl->AddEntry(&tg1,"RK1 Solution","p");
-  tl->AddEntry(&tg2,"RK2 Solution","p");
-  tl->AddEntry(&fun_sol,"Exact Solution","l");
-  tl->Draw();
-  c1->Draw();
-  c1->Update();
-  c1->Print("OED_cpp.png");
-
-  // retreive the data from the graphs and write to a file
-  FILE *fp=fopen("RKdemo.dat","w");
-  double *x, *y1, *y2;
-  x=tg1.GetX();
-  y1=tg1.GetY();
-  y2=tg2.GetY();
-  fprintf(fp,"#%8s %9s %9s %9s\n","x","RK1","RK2","Exact");
-  for (int i=0; i<tg1.GetN(); i++){
-    fprintf(fp,"%9.4lf %9.4lf %9.4lf %9.4lf\n",x[i],y1[i],y2[i],fun_sol.Eval(x[i]));
-  }
-  fclose(fp);
-  
-  cout << "Press ^c to exit" << endl;
-  theApp.SetIdleTimer(30,".q");  // set up a failsafe timer to end the program  
-  theApp.Run();
+  (void)x;
+  return -2*y;
 }
 
+// Another demo example (unused here)
+double fun2(double x, double y){
+  return -y/x - 2.0/(x*x);
+}
+
+// ---------------------------------------------------------
+// NEW ODE for RK4 Assignment
+// dy/dx = x - y,   y(0) = 1
+// exact: y = x - 1 + 2 e^{-x}
+// ---------------------------------------------------------
+double fun3(double x, double y){
+    return x - y;
+}
+
+// ---------------------------------------------------------
+// MAIN PROGRAM
+// ---------------------------------------------------------
+int main(int argc, char **argv){
+    TApplication theApp("App", &argc, argv);
+
+    // Number of steps and range
+    int nsteps = 60;
+    double x0 = 0.0;
+    double xmax = 3.0;
+    double y0 = 1.0;
+
+    // ---------------------------------------------------------
+    // Solve ODE with RK1, RK2, RK4
+    // ---------------------------------------------------------
+    TGraph g1 = RK1Solve(fun3, y0, nsteps, x0, xmax);
+    TGraph g2 = RK2Solve(fun3, y0, nsteps, x0, xmax);
+    TGraph g4 = RK4Solve(fun3, y0, nsteps, x0, xmax);
+
+    // Exact solution y = x - 1 + 2 exp(-x)
+    TF1 exact("exact","x - 1 + 2*exp(-x)", x0, xmax);
+
+    // ---------------------------------------------------------
+    // Canvas setup (auto scales to screen)
+    // ---------------------------------------------------------
+    UInt_t dh = gClient->GetDisplayHeight()/2;   // half screen height  
+    UInt_t dw = 1.1*dh;
+
+    TCanvas *c1 = new TCanvas("c1","RK1, RK2, RK4 Comparison",dw,dh);
+
+    // ---------------------------------------------------------
+    // Style settings
+    // ---------------------------------------------------------
+    g1.SetLineColor(kRed);
+    g2.SetLineColor(kBlue);
+    g4.SetLineColor(kGreen+2);
+    exact.SetLineColor(kBlack);
+    exact.SetLineStyle(2);
+
+    g1.SetLineWidth(2);
+    g2.SetLineWidth(2);
+    g4.SetLineWidth(2);
+    exact.SetLineWidth(2);
+
+    // ---------------------------------------------------------
+    // Draw curves
+    // ---------------------------------------------------------
+    g1.SetTitle("RK Method Comparison for dy/dx = x - y; x; y");
+    g1.Draw("AL");
+    g2.Draw("L SAME");
+    g4.Draw("L SAME");
+    exact.Draw("L SAME");
+
+    // ---------------------------------------------------------
+    // Legend
+    // ---------------------------------------------------------
+    TLegend *leg = new TLegend(0.60,0.70,0.90,0.90);
+    leg->AddEntry(&g1,"RK1 (Euler)","l");
+    leg->AddEntry(&g2,"RK2 (Midpoint)","l");
+    leg->AddEntry(&g4,"RK4","l");
+    leg->AddEntry(&exact,"Exact Solution","l");
+    leg->Draw();
+
+    c1->Draw();
+    c1->Update();
+    c1->Print("RK4_plot.png");   // saves your plot
+
+    // ---------------------------------------------------------
+    // Write data to file (including RK4)
+    // ---------------------------------------------------------
+    FILE *fp = fopen("RKdemo.dat","w");
+
+    double *x = g1.GetX();
+    double *y1 = g1.GetY();
+    double *y2 = g2.GetY();
+    double *y4 = g4.GetY();
+
+    fprintf(fp,"#   x        RK1         RK2         RK4         Exact\n");
+
+    for(int i = 0; i < g1.GetN(); i++){
+        fprintf(fp,"%9.4lf %12.6lf %12.6lf %12.6lf %12.6lf\n",
+                x[i], y1[i], y2[i], y4[i], exact.Eval(x[i]));
+    }
+
+    fclose(fp);
+
+    std::cout << "Wrote data to RKdemo.dat\n";
+    std::cout << "Press Ctrl+C to exit\n";
+
+    theApp.SetIdleTimer(30,".q");  
+    theApp.Run();
+}

@@ -17,3 +17,6 @@ TGraph RK1Solve(double (*f)(double x, double y), double y0,
 TGraph RK2Solve(double (*f)(double x, double y), double y0,
 		int nsteps, double x0, double xmax);
 
+TGraph RK4Solve(double (*f)(double x, double y), double y0,
+                int nsteps, double x0, double xmax);
+

@@ -41,3 +41,27 @@ TGraph RK2Solve(double (*f)(double x, double y), double y0,
   }
   return tg;
 }
+
+TGraph RK4Solve(double (*f)(double x, double y), double y0,
+                int nsteps, double x0, double xmax){
+
+    double h = (xmax - x0)/nsteps;
+    double x = x0;
+    double y = y0;
+
+    TGraph tg;
+    tg.SetPoint(0, x, y);
+
+    for(int i=0; i<nsteps; i++){
+        double k1 = h * f(x, y);
+        double k2 = h * f(x + h/2.0, y + k1/2.0);
+        double k3 = h * f(x + h/2.0, y + k2/2.0);
+        double k4 = h * f(x + h, y + k3);
+
+        y = y + (k1 + 2*k2 + 2*k3 + k4)/6.0;
+        x = x + h;
+
+        tg.SetPoint(i+1, x, y);
+    }
+    return tg;
+}
